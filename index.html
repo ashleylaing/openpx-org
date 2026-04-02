@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenPX</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --border: #222222;
+      --text-primary: #f0f0f0;
+      --text-muted: #666666;
+      --accent: #4f8ef7;
+      --accent-hover: #6ba3ff;
+      --success: #3ecf8e;
+      --error: #f87171;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    /* Wordmark */
+    .wordmark {
+      user-select: none;
+    }
+
+    .wordmark img {
+      height: 36px;
+      width: auto;
+      /* Flip dark mark to white for dark background */
+      filter: brightness(0) invert(1);
+      opacity: 0.92;
+    }
+
+    /* Tagline */
+    .tagline {
+      font-size: 0.95rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    /* Form */
+    .form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 300;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .input::placeholder { color: var(--text-muted); }
+    .input:focus { border-color: #333; }
+
+    .btn {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Status */
+    .status {
+      font-size: 0.8rem;
+      text-align: center;
+      min-height: 1.2em;
+      transition: opacity 0.2s;
+    }
+    .status.success { color: var(--success); }
+    .status.error   { color: var(--error); }
+    .status.hidden  { opacity: 0; }
+
+    /* Footer */
+    footer {
+      position: fixed;
+      bottom: 2rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    footer a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    footer a:hover { color: var(--text-primary); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="wordmark">
+      <img src="logo.png" alt="OpenPX" />
+    </div>
+
+    <p class="tagline">Something big is coming</p>
+
+    <div class="form">
+      <input class="input" id="name"  type="text"  placeholder="Name"  autocomplete="name" />
+      <input class="input" id="email" type="email" placeholder="Email" autocomplete="email" />
+      <button class="btn" id="submitBtn" onclick="handleSubmit()">Request Access</button>
+      <p class="status hidden" id="status"></p>
+    </div>
+
+  </div>
+
+  <footer>
+    <a href="mailto:hello@openpx.org">hello@openpx.org</a>
+  </footer>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────
+    // SETUP: Replace this URL with your Google Apps Script Web App
+    // deployment URL once you've published it (see instructions).
+    // ─────────────────────────────────────────────────────────────
+    const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_URL_HERE";
+
+    async function handleSubmit() {
+      const name  = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const btn    = document.getElementById("submitBtn");
+      const status = document.getElementById("status");
+
+      if (!name || !email) {
+        showStatus("Please enter your name and email.", "error");
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        showStatus("Please enter a valid email address.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Submitting…";
+
+      try {
+        await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, ts: new Date().toISOString() })
+        });
+        // no-cors means we can't read the response — assume success
+        btn.style.display = "none";
+        document.getElementById("name").style.display  = "none";
+        document.getElementById("email").style.display = "none";
+        showStatus("You're on the list. We'll be in touch.", "success");
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "Request Access";
+        showStatus("Something went wrong. Try emailing us directly.", "error");
+      }
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = "status " + type;
+    }
+
+    function isValidEmail(e) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") handleSubmit();
+    });
+  </script>
+
+</body>
+</html>
